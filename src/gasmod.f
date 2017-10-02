@@ -48,7 +48,6 @@ c--   BEGIN LSU MOD
       real*8,allocatable :: gas_sx(:)
       real*8,allocatable :: gas_sy(:)
       real*8,allocatable :: gas_sz(:)
-      real*8,allocatable :: gas_egas(:)
 c--   END   LSU MOD
 
 
@@ -151,7 +150,6 @@ c--   BEGIN LSU MOD
       allocate(gas_sx(gas_ncell))
       allocate(gas_sy(gas_ncell))
       allocate(gas_sz(gas_ncell))
-      allocate(gas_egas(gas_ncell))
 c--   END   LSU MOD
 
       end subroutine gasmod_init
@@ -188,7 +186,6 @@ c--   BEGIN LSU MOD
       deallocate(gas_sx)
       deallocate(gas_sy)
       deallocate(gas_sz)
-      deallocate(gas_egas)
 c--   END   LSU MOD
 
       end subroutine gas_dealloc

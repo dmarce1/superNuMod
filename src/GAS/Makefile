@@ -10,7 +10,7 @@ FILES = eos_update.o \
   gas_setup.o gas_update.o \
   temperature_update.o \
   analytic_opacity.o physical_opacity.o \
-  fleck_factor.o opacity_planckmean.o gas_update.o
+  fleck_factor.o opacity_planckmean.o gas_hydro.o
 
 .PHONY: all clean
 
