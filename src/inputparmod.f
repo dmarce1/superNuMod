@@ -22,7 +22,10 @@ c
 c-- grid geometry and dimensions
       integer :: in_grd_igeom = 0 !geometry: 1=sph, 2=cyl, 3=car, 11=1Dsph
       integer :: in_ndim(3) = [1, 1, 1]  !number of x-direction cells
+c     BEGIN LSU MOD
       logical :: in_isvelocity = .true.  !switch underlying grid between spatial+static to velocity+expanding
+c     END   LSU MOD
+      logical :: in_ishydro = .false.
 c
 c
 c-- read input structure file instead of specifying the stucture with input parameters
@@ -154,7 +157,10 @@ c-- runtime parameter namelist
      & in_nomp,
 !grd
      & in_grd_igeom,in_ndim,
+c     BEGIN LSU MOD
      & in_isvelocity,
+c     END   LSU MOD
+     & in_ishydro,
 !str
      & in_voidcorners,in_noreadstruct,
      & in_str_lx,in_str_ly,in_str_lz,
@@ -267,7 +273,10 @@ c
       call insertl(in_io_nogriddump,in_l,il)
       call insertl(in_io_dogrdtally,in_l,il)
       call insertl(in_noreadstruct,in_l,il)
+c     BEGIN LSU MOD
       call insertl(in_isvelocity,in_l,il)
+c     END   LSU MOD
+      call insertl(in_ishydro,in_l,il)
       call insertr(in_gas_gastempinit,in_r,ir)
       call insertr(in_gas_radtempinit,in_r,ir)
       call insertr(in_gas_cvcoef,in_r,ir)
@@ -784,7 +793,10 @@ c
       grd_nx    = in_ndim(1)
       grd_ny    = in_ndim(2)
       grd_nz    = in_ndim(3)
+c     BEGIN LSU MOD
       grd_isvelocity = in_isvelocity
+      grd_ishydro = in_ishydro
+c     END   LSU MOD
 c!}}}
       end subroutine provide_inputpars
 c

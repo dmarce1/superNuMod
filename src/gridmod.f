@@ -5,6 +5,9 @@ c     --------------
       implicit none
 c
       logical :: grd_isvelocity=.false.
+c     BEGIN LSU MOD
+      logical :: grd_ishydro=.false.
+c     END   LSU MOD
 c
       integer :: grd_igeom=0
 c
