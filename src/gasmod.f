@@ -44,6 +44,14 @@ c-- mate,allocatablerial energy (temperature) source (may be manufactured), rev>
 c
       real*8,allocatable :: gas_edep(:)
 
+c--   BEGIN LSU MOD
+      real*8,allocatable :: gas_sx(:)
+      real*8,allocatable :: gas_sy(:)
+      real*8,allocatable :: gas_sz(:)
+      real*8,allocatable :: gas_egas(:)
+c--   END   LSU MOD
+
+
 c== DD copies
 c-- Line+Cont extinction coeff
       real*4,allocatable :: gas_cap(:,:) !(ng,ncell)
@@ -138,6 +146,14 @@ c
 c-- ndim=2 alloc big
       allocate(gas_cap(ng,gas_ncell))
 !}}}
+
+c--   BEGIN LSU MOD
+      allocate(gas_sx(gas_ncell))
+      allocate(gas_sy(gas_ncell))
+      allocate(gas_sz(gas_ncell))
+      allocate(gas_egas(gas_ncell))
+c--   END   LSU MOD
+
       end subroutine gasmod_init
 c
 c
@@ -167,6 +183,14 @@ c
       deallocate(gas_natom1fr)
       deallocate(gas_natom0fr)
       deallocate(gas_cap)!}}}
+
+c--   BEGIN LSU MOD
+      deallocate(gas_sx)
+      deallocate(gas_sy)
+      deallocate(gas_sz)
+      deallocate(gas_egas)
+c--   END   LSU MOD
+
       end subroutine gas_dealloc
 c
       end module gasmod
