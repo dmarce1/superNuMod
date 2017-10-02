@@ -1,0 +1,11 @@
+diff -r d244a10db46e GRID/grid_setup.f
+--- a/GRID/grid_setup.f	Mon Feb 20 16:32:09 2017 -0700
++++ b/GRID/grid_setup.f	Fri Sep 29 12:14:09 2017 -0500
+@@ -30,6 +30,7 @@
+       loop_k: do k=1,grd_nz
+        do j=1,grd_ny
+        do i=1,grd_nx
++        write(*,*) grd_xarr(i)
+         idcell = idcell + 1
+         if(idcell == str_idcell(l)) then
+          grd_icell(i,j,k) = l
