@@ -1,6 +1,6 @@
 diff -r d244a10db46e GAS/Makefile
 --- a/GAS/Makefile	Mon Feb 20 16:32:09 2017 -0700
-+++ b/GAS/Makefile	Mon Oct 02 17:25:54 2017 -0500
++++ b/GAS/Makefile	Tue Oct 03 14:52:15 2017 -0500
 @@ -10,7 +10,7 @@
    gas_setup.o gas_update.o \
    temperature_update.o \
@@ -12,7 +12,7 @@ diff -r d244a10db46e GAS/Makefile
  
 diff -r d244a10db46e GRID/grid_setup.f
 --- a/GRID/grid_setup.f	Mon Feb 20 16:32:09 2017 -0700
-+++ b/GRID/grid_setup.f	Mon Oct 02 17:25:54 2017 -0500
++++ b/GRID/grid_setup.f	Tue Oct 03 14:52:15 2017 -0500
 @@ -30,6 +30,7 @@
        loop_k: do k=1,grd_nz
         do j=1,grd_ny
@@ -23,7 +23,7 @@ diff -r d244a10db46e GRID/grid_setup.f
           grd_icell(i,j,k) = l
 diff -r d244a10db46e Makefile
 --- a/Makefile	Mon Feb 20 16:32:09 2017 -0700
-+++ b/Makefile	Mon Oct 02 17:25:54 2017 -0500
++++ b/Makefile	Tue Oct 03 14:52:15 2017 -0500
 @@ -26,7 +26,7 @@
    miscmod.o ionsmod.o ffxsmod.o bfxsmod.o bbxsmod.o \
    inputparmod.o timestepmod.o groupmod.o gridmod.o gasmod.o inputstrmod.o \
@@ -33,46 +33,58 @@ diff -r d244a10db46e Makefile
  
  FILES := banner.o \
    particle_advance.o particle_advance_gamgrey.o fluxtally.o \
+diff -r d244a10db46e OUTPUT/Makefile
+--- a/OUTPUT/Makefile	Mon Feb 20 16:32:09 2017 -0700
++++ b/OUTPUT/Makefile	Tue Oct 03 14:52:15 2017 -0500
+@@ -5,8 +5,8 @@
+ include $(TOP)/Makefile.compiler
+ include $(TOP)/Makefile.include
+ 
+-LIBRARY = output.a
+-FILES = open_logfiles.o output_grid.o output_flux.o output_gamflux.o
++LIBRARY = output.a libsiloh5.o
++FILES = open_logfiles.o output_grid.o output_flux.o output_gamflux.o output_silo.o
+ 
+ .PHONY: all clean
+ 
 diff -r d244a10db46e gasmod.f
 --- a/gasmod.f	Mon Feb 20 16:32:09 2017 -0700
-+++ b/gasmod.f	Mon Oct 02 17:25:54 2017 -0500
-@@ -44,6 +44,13 @@
- c
++++ b/gasmod.f	Tue Oct 03 14:52:15 2017 -0500
+@@ -41,9 +41,14 @@
+       real*8,allocatable :: gas_natom0fr(:,:,:) !(-2:2,ncell,nchain) !initial natom fractions (0,1,2:stable fe/co/ni, -1:ni56, -2:co56)
+ c-- mate,allocatablerial energy (temperature) source (may be manufactured), rev>244
+       real*8,allocatable :: gas_matsrc(:)     !-- material energy (temperature) source (may be manufactured)
+-c
++cf
        real*8,allocatable :: gas_edep(:)
  
 +c--   BEGIN LSU MOD
-+      real*8,allocatable :: gas_sx(:)
-+      real*8,allocatable :: gas_sy(:)
-+      real*8,allocatable :: gas_sz(:)
++      real*8,allocatable :: gas_mom(:,:)
 +c--   END   LSU MOD
 +
 +
  c== DD copies
  c-- Line+Cont extinction coeff
        real*4,allocatable :: gas_cap(:,:) !(ng,ncell)
-@@ -138,6 +145,13 @@
+@@ -138,6 +143,11 @@
  c-- ndim=2 alloc big
        allocate(gas_cap(ng,gas_ncell))
  !}}}
 +
 +c--   BEGIN LSU MOD
-+      allocate(gas_sx(gas_ncell))
-+      allocate(gas_sy(gas_ncell))
-+      allocate(gas_sz(gas_ncell))
++      allocate(gas_mom(3,gas_ncell))
 +c--   END   LSU MOD
 +
        end subroutine gasmod_init
  c
  c
-@@ -167,6 +181,13 @@
+@@ -167,6 +177,11 @@
        deallocate(gas_natom1fr)
        deallocate(gas_natom0fr)
        deallocate(gas_cap)!}}}
 +
 +c--   BEGIN LSU MOD
-+      deallocate(gas_sx)
-+      deallocate(gas_sy)
-+      deallocate(gas_sz)
++      deallocate(gas_mom)
 +c--   END   LSU MOD
 +
        end subroutine gas_dealloc
@@ -80,7 +92,7 @@ diff -r d244a10db46e gasmod.f
        end module gasmod
 diff -r d244a10db46e gridmod.f
 --- a/gridmod.f	Mon Feb 20 16:32:09 2017 -0700
-+++ b/gridmod.f	Mon Oct 02 17:25:54 2017 -0500
++++ b/gridmod.f	Tue Oct 03 14:52:15 2017 -0500
 @@ -5,6 +5,9 @@
        implicit none
  c
@@ -93,7 +105,7 @@ diff -r d244a10db46e gridmod.f
  c
 diff -r d244a10db46e inputparmod.f
 --- a/inputparmod.f	Mon Feb 20 16:32:09 2017 -0700
-+++ b/inputparmod.f	Mon Oct 02 17:25:54 2017 -0500
++++ b/inputparmod.f	Tue Oct 03 14:52:15 2017 -0500
 @@ -22,7 +22,10 @@
  c-- grid geometry and dimensions
        integer :: in_grd_igeom = 0 !geometry: 1=sph, 2=cyl, 3=car, 11=1Dsph

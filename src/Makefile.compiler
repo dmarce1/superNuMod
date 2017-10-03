@@ -11,7 +11,7 @@ FCFLAGS = -O3
 FCFLAGS += -m64 -march=native 
 FCFLAGS += -fopenmp
 FCFLAGS_FF = -ffixed-form
-LDFLAGS = -fopenmp
+LDFLAGS = -fopenmp -lsiloh5
 
 AR = ar
 RANLIB=ranlib

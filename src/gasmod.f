@@ -41,13 +41,11 @@ c-- domain decomposed grid variables used to calculate the state of the material
       real*8,allocatable :: gas_natom0fr(:,:,:) !(-2:2,ncell,nchain) !initial natom fractions (0,1,2:stable fe/co/ni, -1:ni56, -2:co56)
 c-- mate,allocatablerial energy (temperature) source (may be manufactured), rev>244
       real*8,allocatable :: gas_matsrc(:)     !-- material energy (temperature) source (may be manufactured)
-c
+cf
       real*8,allocatable :: gas_edep(:)
 
 c--   BEGIN LSU MOD
-      real*8,allocatable :: gas_sx(:)
-      real*8,allocatable :: gas_sy(:)
-      real*8,allocatable :: gas_sz(:)
+      real*8,allocatable :: gas_mom(:,:)
 c--   END   LSU MOD
 
 
@@ -147,9 +145,7 @@ c-- ndim=2 alloc big
 !}}}
 
 c--   BEGIN LSU MOD
-      allocate(gas_sx(gas_ncell))
-      allocate(gas_sy(gas_ncell))
-      allocate(gas_sz(gas_ncell))
+      allocate(gas_mom(3,gas_ncell))
 c--   END   LSU MOD
 
       end subroutine gasmod_init
@@ -183,9 +179,7 @@ c
       deallocate(gas_cap)!}}}
 
 c--   BEGIN LSU MOD
-      deallocate(gas_sx)
-      deallocate(gas_sy)
-      deallocate(gas_sz)
+      deallocate(gas_mom)
 c--   END   LSU MOD
 
       end subroutine gas_dealloc

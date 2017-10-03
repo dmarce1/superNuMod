@@ -5,8 +5,8 @@ TOP := $(CURDIR)/..
 include $(TOP)/Makefile.compiler
 include $(TOP)/Makefile.include
 
-LIBRARY = output.a
-FILES = open_logfiles.o output_grid.o output_flux.o output_gamflux.o
+LIBRARY = output.a libsiloh5.o
+FILES = open_logfiles.o output_grid.o output_flux.o output_gamflux.o output_silo.o
 
 .PHONY: all clean
 
