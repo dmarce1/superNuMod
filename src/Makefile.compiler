@@ -4,14 +4,12 @@ FC = mpif90
 #-- opt or debug
 FCFLAGS = -O3 
 #FCFLAGS = -g -O0 -Wall -fcheck=all
-#-- gfortran 4.4.3 debug flags:
-#FCFLAGS = -g -O0 -Wall -fbounds-check -fbacktrace
 
 #-- additional flags
-FCFLAGS += -m64 -march=native 
+FCFLAGS += -m64 -march=native -ffast-math
 FCFLAGS += -fopenmp
 FCFLAGS_FF = -ffixed-form
-LDFLAGS = -fopenmp -lsiloh5
+LDFLAGS = -fopenmp -lsilo -L/home/dmarce1/lib
 
 AR = ar
 RANLIB=ranlib

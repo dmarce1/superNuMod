@@ -138,6 +138,7 @@ program supernu
   endif
 
 
+
 !-- time step loop
 !=================
   if(lmpi0) then
@@ -148,6 +149,9 @@ program supernu
   endif
 !
   do it=tsp_itrestart,tsp_nt
+! BEGIN LSU MOD
+     call output_silo(tsp_t,max(it,0))
+  END   LSU MOD
      t_timelin(1) = t_time() !timeline
 !-- allow negative and zero it for temperature initialization purposes
      tsp_it = max(it,1)
@@ -267,6 +271,14 @@ program supernu
      t_timelin(8) = t_time() !timeline
      t_timeline = t_timeline + (t_timelin(2:) - t_timelin(:7))
   enddo !tsp_it
+
+! BEGIN LSU MOD
+     if( it .ge. 0 ) then
+      call output_silo(tsp_t,it)
+     endif
+! END   LSU MOD
+
+
 !
 !
 !--

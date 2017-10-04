@@ -22,10 +22,7 @@ c
 c-- grid geometry and dimensions
       integer :: in_grd_igeom = 0 !geometry: 1=sph, 2=cyl, 3=car, 11=1Dsph
       integer :: in_ndim(3) = [1, 1, 1]  !number of x-direction cells
-c     BEGIN LSU MOD
       logical :: in_isvelocity = .true.  !switch underlying grid between spatial+static to velocity+expanding
-c     END   LSU MOD
-      logical :: in_ishydro = .false.
 c
 c
 c-- read input structure file instead of specifying the stucture with input parameters
@@ -150,6 +147,10 @@ c-- output
       logical :: in_io_nogriddump = .false.  !don't write grid cell variables
       character(4) :: in_io_opacdump = 'off '    !off|one|each|all: write opacity data to file
       character(4) :: in_io_pdensdump = 'off '   !off|one|each: write partial densities to file
+c     BEGIN LSU MOD
+      logical :: in_io_silo = .false.  !use LLNL SILO output
+      logical :: in_ishydro = .false.
+c     END   LSU MOD
 c     
 c-- runtime parameter namelist
       namelist /inputpars/
@@ -157,10 +158,7 @@ c-- runtime parameter namelist
      & in_nomp,
 !grd
      & in_grd_igeom,in_ndim,
-c     BEGIN LSU MOD
      & in_isvelocity,
-c     END   LSU MOD
-     & in_ishydro,
 !str
      & in_voidcorners,in_noreadstruct,
      & in_str_lx,in_str_ly,in_str_lz,
@@ -203,6 +201,11 @@ c     END   LSU MOD
      & in_io_grabstdout,
      & in_io_nogriddump,in_io_dogrdtally,
      & in_io_opacdump,in_io_pdensdump
+c     BEGIN LSU MOD
+     & ,
+     & in_io_silo,
+     & in_ishydro
+c     END   LSU MOD
 c
 c-- pointers
 c
@@ -273,10 +276,7 @@ c
       call insertl(in_io_nogriddump,in_l,il)
       call insertl(in_io_dogrdtally,in_l,il)
       call insertl(in_noreadstruct,in_l,il)
-c     BEGIN LSU MOD
       call insertl(in_isvelocity,in_l,il)
-c     END   LSU MOD
-      call insertl(in_ishydro,in_l,il)
       call insertr(in_gas_gastempinit,in_r,ir)
       call insertr(in_gas_radtempinit,in_r,ir)
       call insertr(in_gas_cvcoef,in_r,ir)
@@ -342,6 +342,10 @@ c     END   LSU MOD
       call insertl(in_nobfopac,in_l,il)
       call insertl(in_noffopac,in_l,il)
       call insertl(in_nothmson,in_l,il)
+c     BEGIN LSU MOD
+      call insertl(in_io_silo,in_l,il)
+      call insertl(in_ishydro,in_l,il)
+c     END   LSU MOD
 c
       contains
 c
@@ -793,8 +797,8 @@ c
       grd_nx    = in_ndim(1)
       grd_ny    = in_ndim(2)
       grd_nz    = in_ndim(3)
-c     BEGIN LSU MOD
       grd_isvelocity = in_isvelocity
+c     BEGIN LSU MOD
       grd_ishydro = in_ishydro
 c     END   LSU MOD
 c!}}}
