@@ -2,8 +2,8 @@
 FC = mpif90
 
 #-- opt or debug
-FCFLAGS = -O3 
-#FCFLAGS = -g -O0 -Wall -fcheck=all
+#FCFLAGS = -O3 
+FCFLAGS = -g -O0 -Wall -fcheck=all
 
 #-- additional flags
 FCFLAGS += -m64 -march=native -ffast-math

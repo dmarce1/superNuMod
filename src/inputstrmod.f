@@ -146,6 +146,7 @@ c-- allocate data arrays
 c
 c-- read body
       read(4,*,iostat=ierr) raw
+      write(*,*) ierr
       if(ierr/=0) stop 'read_inputstr: input.str format err: body'
       read(4,*,iostat=ierr) dmy
       if(ierr/=-1) stop 'read_inputstr: input.str body too long'

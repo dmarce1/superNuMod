@@ -151,7 +151,7 @@ program supernu
   do it=tsp_itrestart,tsp_nt
 ! BEGIN LSU MOD
      call output_silo(tsp_t,max(it,0))
-  END   LSU MOD
+!  END   LSU MOD
      t_timelin(1) = t_time() !timeline
 !-- allow negative and zero it for temperature initialization purposes
      tsp_it = max(it,1)

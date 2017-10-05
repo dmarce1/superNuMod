@@ -56,6 +56,7 @@ c-- map to compressed grid
       do i=1,grd_nx
        l = grd_icell(i,j,k)
        grd_vol(l) = grd_vol(l) + vol(i,j,k) !multiple void cells are linked to the dummy cell
+!       write(*,*) grd_vol(l)
       enddo
       enddo
       enddo

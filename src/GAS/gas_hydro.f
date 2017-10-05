@@ -1,3 +1,53 @@
+      subroutine gas_cfl_limit(tm,dt)
+
+      use gridmod
+      use gasmod
+      implicit none
+
+      real*8, intent(in ) :: tm
+      real*8, intent(out) :: dt
+      integer :: d, i, j, k, l
+      real*8 :: dtinv, vel, fac, tinv
+      real*8 x(3), dxinv(3), rhoinv
+
+      dtinv = 0.0d0
+
+
+      if( grd_isvelocity ) then
+       fac = tm
+      else
+       fac = 1.0d0
+      endif
+
+
+      do i=1,grd_nx
+       x(1) = (grd_xarr(i) + grd_xarr(i+1)) * 0.5d0*fac
+       dxinv(1) = 1.0d0 / ((grd_xarr(i) - grd_xarr(i+1)) *fac)
+       do j=1,grd_ny
+        x(2) = (grd_yarr(j) + grd_yarr(j+1)) * 0.5d0*fac
+        dxinv(2) = 1.0d0 / ((grd_yarr(j+1) - grd_yarr(j)) *fac)
+        do k=1,grd_nz
+         l = grd_icell(i,j,k)
+         rhoinv = 1.0d0 / gas_rho(l)
+         x(3) = (grd_zarr(k) + grd_zarr(k+1)) * 0.5d0*fac
+         dxinv(3) = 1.0d0 / ((grd_zarr(k+1) - grd_zarr(k)) *fac)
+         do d=1,3
+          vel = gas_mom(l,d) * rhoinv
+          if( grd_isvelocity ) then
+           vel = vel - x(d) * fac
+          endif
+          tinv = max(tinv,vel/dxinv(d))
+         enddo
+        enddo
+       enddo
+      enddo
+
+      dt = 0.4d0 / tinv
+
+      end subroutine
+
+
+
       subroutine gas_hydro(tm,dt)
 
 
@@ -10,7 +60,7 @@
 
 
 
-      real*8 x(3), rhoinv, tinv, dx(3)
+      real*8 x(3), rhoinv, fac, dx(3)
       real*8 ap, am, a0, dxinv, tmp
       integer i, j, k, l, m, lp(3), lm(3), fp, fm, d, d1, d2
 
@@ -23,9 +73,9 @@ c
       allocate(natom_du(-2*gas_nchain:gas_nelem,gas_ncell))
 
       if( grd_isvelocity ) then
-       tinv = 1.0d0 / tm
+       fac = tm
       else
-       tinv = 1.0d0
+       fac = 1.0d0
       endif
 
       do m=-2*gas_nchain,gas_nelem
@@ -36,17 +86,17 @@ c
       enddo
 
       do i=1,grd_nx
-       x(1) = (grd_xarr(i) + grd_xarr(i+1)) * 0.5d0*tinv
+       x(1) = (grd_xarr(i) + grd_xarr(i+1)) * 0.5d0*fac
        do j=1,grd_ny
-        x(2) = (grd_xarr(j) + grd_yarr(j+1)) * 0.5d0*tinv
+        x(2) = (grd_yarr(j) + grd_yarr(j+1)) * 0.5d0*fac
         do k=1,grd_nz
+         x(3) = (grd_zarr(k) + grd_zarr(k+1)) * 0.5d0*fac
          l = grd_icell(i,j,k)
          rhoinv = 1.0d0 / gas_rho(l)
-         x(3) = (grd_xarr(k) + grd_zarr(k+1)) * 0.5d0*tinv
          do d=1,3
           vel(d,l) = gas_mom(l,d) * rhoinv
           if( grd_isvelocity ) then
-           vel(d,l) = vel(d,l) - x(d) * tinv
+           vel(d,l) = vel(d,l) - x(d) * fac
           endif
          enddo
         enddo
@@ -54,10 +104,11 @@ c
       enddo
 
       do i=2,grd_nx-1
-       dx(1) = (grd_xarr(i+1) - grd_xarr(i))*tinv
+       dx(1) = (grd_xarr(i+1) - grd_xarr(i))*fac
        do j=2,grd_ny-1
-        dx(2) = (grd_yarr(j+1) - grd_yarr(j))*tinv
+        dx(2) = (grd_yarr(j+1) - grd_yarr(j))*fac
         do k=2,grd_nz-1
+         dx(3) = (grd_zarr(k+1) - grd_zarr(k))*fac
          l = grd_icell(i,j,k)
          lp(1) = grd_icell(i+1,j,k)
          lp(2) = grd_icell(i,j+1,k)
@@ -65,12 +116,11 @@ c
          lm(1) = grd_icell(i-1,j,k)
          lm(2) = grd_icell(i,j-1,k)
          lm(3) = grd_icell(i,j,k-1)
-         dx(3) = (grd_zarr(k+1) - grd_zarr(k))*tinv
          if( grd_isvelocity ) then
           do d1=1,3
-           mom_du(d1,l) =  - 3.0d0 * gas_mom(l,d1) * tinv
+           mom_du(d1,l) =  - 3.0d0 * gas_mom(l,d1) * fac
           enddo
-          rho_du(l) =  - 3.0d0 * gas_rho(l) * tinv
+          rho_du(l) =  - 3.0d0 * gas_rho(l) * fac
          endif
          do d1=1,3
           dxinv = 1.0d0 / dx(d1)

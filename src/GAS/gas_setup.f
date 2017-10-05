@@ -6,14 +6,21 @@ c     --------------------
       use physconstmod
       use inputparmod
       use gasmod
+      use gridmod
       use manufacmod
       use miscmod, only:warn
+c     BEGIN LSU MOD
+      use timestepmod
+c     END   LSU MOD
       implicit none
 ************************************************************************
 * Initialize the gas grid, the part that is constant with time and
 * temperature. The part that changes is done in gas_grid_update.
 ************************************************************************
       integer :: l,i
+c     BEGIN LSU MOD
+      integer :: j, k
+c     END   LSU MOD
       real*8 :: mass0fr(-2*gas_nchain:gas_nelem,gas_ncell)
 c
 c-- agnostic mass setup
@@ -75,6 +82,28 @@ c-- as calculated in massfr2natomfr
        gas_ye0 = gas_ye
       endif
 c
+c     BEGIN LSU MOD
+      call grid_update(1.0)
+
+      gas_rho = gas_mass / grd_vol
+
+      if( grd_isvelocity ) then
+       do i = 1, grd_nx
+        do j = 1, grd_ny
+         do k = 1, grd_nz
+          l = grd_icell(i,j,k)
+          gas_mom(1,l) = (grd_xarr(i)+grd_xarr(i+1))*0.5d0*gas_rho(l)
+          gas_mom(2,l) = (grd_yarr(j)+grd_yarr(j+1))*0.5d0*gas_rho(l)
+          gas_mom(3,l) = (grd_zarr(k)+grd_zarr(k+1))*0.5d0*gas_rho(l)
+         enddo
+        enddo
+       enddo
+      else
+       gas_mom = 0.0d0
+      endif
+
+c     END   LSU MOD
+
       end subroutine gas_setup
 c
 c

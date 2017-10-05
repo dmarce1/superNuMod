@@ -1,6 +1,6 @@
 diff -r d244a10db46e GAS/Makefile
 --- a/GAS/Makefile	Mon Feb 20 16:32:09 2017 -0700
-+++ b/GAS/Makefile	Wed Oct 04 14:37:22 2017 -0500
++++ b/GAS/Makefile	Thu Oct 05 14:05:51 2017 -0500
 @@ -10,7 +10,7 @@
    gas_setup.o gas_update.o \
    temperature_update.o \
@@ -10,9 +10,63 @@ diff -r d244a10db46e GAS/Makefile
  
  .PHONY: all clean
  
+diff -r d244a10db46e GAS/gas_setup.f
+--- a/GAS/gas_setup.f	Mon Feb 20 16:32:09 2017 -0700
++++ b/GAS/gas_setup.f	Thu Oct 05 14:05:51 2017 -0500
+@@ -6,14 +6,21 @@
+       use physconstmod
+       use inputparmod
+       use gasmod
++      use gridmod
+       use manufacmod
+       use miscmod, only:warn
++c     BEGIN LSU MOD
++      use timestepmod
++c     END   LSU MOD
+       implicit none
+ ************************************************************************
+ * Initialize the gas grid, the part that is constant with time and
+ * temperature. The part that changes is done in gas_grid_update.
+ ************************************************************************
+       integer :: l,i
++c     BEGIN LSU MOD
++      integer :: j, k
++c     END   LSU MOD
+       real*8 :: mass0fr(-2*gas_nchain:gas_nelem,gas_ncell)
+ c
+ c-- agnostic mass setup
+@@ -75,6 +82,28 @@
+        gas_ye0 = gas_ye
+       endif
+ c
++c     BEGIN LSU MOD
++      call grid_update(1.0)
++
++      gas_rho = gas_mass / grd_vol
++
++      if( grd_isvelocity ) then
++       do i = 1, grd_nx
++        do j = 1, grd_ny
++         do k = 1, grd_nz
++          l = grd_icell(i,j,k)
++          gas_mom(1,l) = (grd_xarr(i)+grd_xarr(i+1))*0.5d0*gas_rho(l)
++          gas_mom(2,l) = (grd_yarr(j)+grd_yarr(j+1))*0.5d0*gas_rho(l)
++          gas_mom(3,l) = (grd_zarr(k)+grd_zarr(k+1))*0.5d0*gas_rho(l)
++         enddo
++        enddo
++       enddo
++      else
++       gas_mom = 0.0d0
++      endif
++
++c     END   LSU MOD
++
+       end subroutine gas_setup
+ c
+ c
 diff -r d244a10db46e GRID/grid_setup.f
 --- a/GRID/grid_setup.f	Mon Feb 20 16:32:09 2017 -0700
-+++ b/GRID/grid_setup.f	Wed Oct 04 14:37:22 2017 -0500
++++ b/GRID/grid_setup.f	Thu Oct 05 14:05:51 2017 -0500
 @@ -30,6 +30,7 @@
        loop_k: do k=1,grd_nz
         do j=1,grd_ny
@@ -21,9 +75,20 @@ diff -r d244a10db46e GRID/grid_setup.f
          idcell = idcell + 1
          if(idcell == str_idcell(l)) then
           grd_icell(i,j,k) = l
+diff -r d244a10db46e GRID/grid_volume.f
+--- a/GRID/grid_volume.f	Mon Feb 20 16:32:09 2017 -0700
++++ b/GRID/grid_volume.f	Thu Oct 05 14:05:51 2017 -0500
+@@ -56,6 +56,7 @@
+       do i=1,grd_nx
+        l = grd_icell(i,j,k)
+        grd_vol(l) = grd_vol(l) + vol(i,j,k) !multiple void cells are linked to the dummy cell
++!       write(*,*) grd_vol(l)
+       enddo
+       enddo
+       enddo
 diff -r d244a10db46e Makefile
 --- a/Makefile	Mon Feb 20 16:32:09 2017 -0700
-+++ b/Makefile	Wed Oct 04 14:37:22 2017 -0500
++++ b/Makefile	Thu Oct 05 14:05:51 2017 -0500
 @@ -26,7 +26,7 @@
    miscmod.o ionsmod.o ffxsmod.o bfxsmod.o bbxsmod.o \
    inputparmod.o timestepmod.o groupmod.o gridmod.o gasmod.o inputstrmod.o \
@@ -35,7 +100,7 @@ diff -r d244a10db46e Makefile
    particle_advance.o particle_advance_gamgrey.o fluxtally.o \
 diff -r d244a10db46e OUTPUT/Makefile
 --- a/OUTPUT/Makefile	Mon Feb 20 16:32:09 2017 -0700
-+++ b/OUTPUT/Makefile	Wed Oct 04 14:37:22 2017 -0500
++++ b/OUTPUT/Makefile	Thu Oct 05 14:05:51 2017 -0500
 @@ -5,8 +5,8 @@
  include $(TOP)/Makefile.compiler
  include $(TOP)/Makefile.include
@@ -49,7 +114,7 @@ diff -r d244a10db46e OUTPUT/Makefile
  
 diff -r d244a10db46e gasmod.f
 --- a/gasmod.f	Mon Feb 20 16:32:09 2017 -0700
-+++ b/gasmod.f	Wed Oct 04 14:37:22 2017 -0500
++++ b/gasmod.f	Thu Oct 05 14:05:51 2017 -0500
 @@ -41,9 +41,14 @@
        real*8,allocatable :: gas_natom0fr(:,:,:) !(-2:2,ncell,nchain) !initial natom fractions (0,1,2:stable fe/co/ni, -1:ni56, -2:co56)
  c-- mate,allocatablerial energy (temperature) source (may be manufactured), rev>244
@@ -92,7 +157,7 @@ diff -r d244a10db46e gasmod.f
        end module gasmod
 diff -r d244a10db46e gridmod.f
 --- a/gridmod.f	Mon Feb 20 16:32:09 2017 -0700
-+++ b/gridmod.f	Wed Oct 04 14:37:22 2017 -0500
++++ b/gridmod.f	Thu Oct 05 14:05:51 2017 -0500
 @@ -5,6 +5,9 @@
        implicit none
  c
@@ -105,7 +170,7 @@ diff -r d244a10db46e gridmod.f
  c
 diff -r d244a10db46e inputparmod.f
 --- a/inputparmod.f	Mon Feb 20 16:32:09 2017 -0700
-+++ b/inputparmod.f	Wed Oct 04 14:37:22 2017 -0500
++++ b/inputparmod.f	Thu Oct 05 14:05:51 2017 -0500
 @@ -147,6 +147,10 @@
        logical :: in_io_nogriddump = .false.  !don't write grid cell variables
        character(4) :: in_io_opacdump = 'off '    !off|one|each|all: write opacity data to file
@@ -150,9 +215,20 @@ diff -r d244a10db46e inputparmod.f
  c!}}}
        end subroutine provide_inputpars
  c
+diff -r d244a10db46e inputstrmod.f
+--- a/inputstrmod.f	Mon Feb 20 16:32:09 2017 -0700
++++ b/inputstrmod.f	Thu Oct 05 14:05:51 2017 -0500
+@@ -146,6 +146,7 @@
+ c
+ c-- read body
+       read(4,*,iostat=ierr) raw
++      write(*,*) ierr
+       if(ierr/=0) stop 'read_inputstr: input.str format err: body'
+       read(4,*,iostat=ierr) dmy
+       if(ierr/=-1) stop 'read_inputstr: input.str body too long'
 diff -r d244a10db46e supernu.f90
 --- a/supernu.f90	Mon Feb 20 16:32:09 2017 -0700
-+++ b/supernu.f90	Wed Oct 04 14:37:22 2017 -0500
++++ b/supernu.f90	Thu Oct 05 14:05:51 2017 -0500
 @@ -138,6 +138,7 @@
    endif
  
@@ -161,19 +237,17 @@ diff -r d244a10db46e supernu.f90
  !-- time step loop
  !=================
    if(lmpi0) then
-@@ -148,6 +149,11 @@
+@@ -148,6 +149,9 @@
    endif
  !
    do it=tsp_itrestart,tsp_nt
 +! BEGIN LSU MOD
-+     if( it .ge. 0 ) then
-+      call output_silo(tsp_t,max(it,0))
-+     endif
-+! END   LSU MOD
++     call output_silo(tsp_t,max(it,0))
++!  END   LSU MOD
       t_timelin(1) = t_time() !timeline
  !-- allow negative and zero it for temperature initialization purposes
       tsp_it = max(it,1)
-@@ -267,6 +273,14 @@
+@@ -267,6 +271,14 @@
       t_timelin(8) = t_time() !timeline
       t_timeline = t_timeline + (t_timelin(2:) - t_timelin(:7))
    enddo !tsp_it
@@ -188,3 +262,19 @@ diff -r d244a10db46e supernu.f90
  !
  !
  !--
+diff -r d244a10db46e timestepmod.f90
+--- a/timestepmod.f90	Mon Feb 20 16:32:09 2017 -0700
++++ b/timestepmod.f90	Thu Oct 05 14:05:51 2017 -0500
+@@ -72,6 +72,12 @@
+        stop 'timestep_update: invalid tsp_gridtype'
+     end select
+ 
++!-- BEGIN LSU MOD
++
++
++!-- END   LSU MOD
++
++
+ !-- append in time array
+     tsp_tarr(tsp_it+1) = tsp_t1
+ 

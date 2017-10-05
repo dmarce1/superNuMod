@@ -72,6 +72,12 @@ module timestepmod
        stop 'timestep_update: invalid tsp_gridtype'
     end select
 
+!-- BEGIN LSU MOD
+
+
+!-- END   LSU MOD
+
+
 !-- append in time array
     tsp_tarr(tsp_it+1) = tsp_t1
 
