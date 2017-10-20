@@ -127,6 +127,11 @@ c
 c-- read preset temperature profiles
       inquire(file='input.temp',exist=lexist)
       if(lexist) call read_temp_preset
+
+
+      call set_cpp_grid(grd_icell,grd_xarr, grd_yarr, grd_zarr, grd_nx,
+     & grd_ny, grd_nz, grd_ncell)
+
 c
       end subroutine grid_setup
 c vim: fdm=marker
